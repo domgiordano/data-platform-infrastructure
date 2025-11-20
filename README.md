@@ -2,6 +2,8 @@
 
 Infrastructure as Code for Azure Data Platform using Terraform Cloud.
 
+[Project Documentation Repo](https://github.com/domgiordano/data-platform-meta/tree/master)
+
 ## Overview
 
 Manages all Azure infrastructure for the data platform including:
