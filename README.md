@@ -1,71 +1,176 @@
-# data-platform-infra
+# Azure Data Platform Infrastructure
 
-Infrastructure as Code for Azure Data Platform using Terraform Cloud.
+Infrastructure as Code for a complete Azure Data Platform using Terraform Cloud.
 
-[Project Documentation Repo](https://github.com/domgiordano/data-platform-meta/tree/master)
+## 🏗️ Architecture Overview
 
-## Overview
+This infrastructure creates a secure, enterprise-grade data platform with:
 
-Manages all Azure infrastructure for the data platform including:
-- Azure Synapse Analytics & Spark Pools
-- Azure Data Lake Storage Gen2
-- Azure Data Factory
-- Azure AI Search & OpenAI
-- Networking & Security
+- **Data Lake Storage Gen2** - Multi-tier data architecture (raw, bronze, silver, gold, ai, search)
+- **Azure Synapse Analytics** - Data warehousing and big data analytics with Spark pools
+- **Azure Data Factory** - Data orchestration and ETL pipelines
+- **Azure AI Search** - Intelligent search capabilities
+- **Azure OpenAI** - Large language models and embeddings
+- **Networking** - VNet with private endpoints for secure communication
+- **Security** - Key Vault for secrets, managed identities for authentication
+- **Monitoring** - Log Analytics, Application Insights, and alerts
 
-## Setup
+## 📋 Prerequisites
 
-### Prerequisites
-- Terraform >= 1.5
-- Terraform Cloud account
-- Azure Service Principal
+1. **Azure Subscription** with appropriate permissions
+2. **Terraform Cloud Account**
+3. **Azure Service Principal** with Contributor role
+4. **Terraform** >= 1.5 installed locally (for testing)
 
-### Terraform Cloud Configuration
+## 🚀 Quick Start
 
-1. Create workspaces with tag `azure-data-platform`:
-   - `azure-data-platform-dev`
-   - `azure-data-platform-stg`
-   - `azure-data-platform-prod`
+### 1. Create Azure Service Principal
 
-2. Set environment variables in each workspace:
+```bash
+# Login to Azure
+az login
+
+# Create service principal
+az ad sp create-for-rbac --name "terraform-data-platform" \
+  --role Contributor \
+  --scopes /subscriptions/{subscription-id}
+
+# Note the output:
+# - appId (ARM_CLIENT_ID)
+# - password (ARM_CLIENT_SECRET)
+# - tenant (ARM_TENANT_ID)
+```
+
+### 2. Configure Terraform Cloud
+
+1. **Create Organization** (if you don't have one)
+
+   - Go to https://app.terraform.io
+   - Create a new organization
+
+2. **Create Workspaces** with tag `azure-data-platform`:
+
    ```
-   ARM_CLIENT_ID
-   ARM_CLIENT_SECRET
-   ARM_SUBSCRIPTION_ID
-   ARM_TENANT_ID
+   - azure-data-platform-dev
+   - azure-data-platform-stg
+   - azure-data-platform-prod
    ```
 
-3. Update `terraform.tf` with your organization:
+3. **Set Environment Variables** in each workspace:
+
+   ```
+   ARM_CLIENT_ID       = <your-service-principal-app-id>
+   ARM_CLIENT_SECRET   = <your-service-principal-password> (mark as sensitive)
+   ARM_SUBSCRIPTION_ID = <your-azure-subscription-id>
+   ARM_TENANT_ID       = <your-azure-tenant-id>
+   ```
+
+4. **Set Terraform Variables** in each workspace:
+
+   ```
+   synapse_sql_admin_password = <generate-strong-password> (mark as sensitive)
+   ```
+
+5. **Update `terraform.tf`**:
    ```hcl
    cloud {
-     organization = "your-org"
+     organization = "your-org-name"  # <-- Change this
+
+     workspaces {
+       tags = ["azure-data-platform"]
+     }
    }
    ```
 
-## Usage
+### 3. Deploy Infrastructure
 
-### Local Development
 ```bash
+# Initialize Terraform
 terraform init
+
+# Select workspace
 terraform workspace select dev
+
+# Plan deployment
 terraform plan -var-file=environments/dev.tfvars
+
+# Apply
+terraform apply -var-file=environments/dev.tfvars
 ```
 
-### Deployment
-Push to branch triggers Terraform Cloud:
-- `develop` → dev workspace
-- `staging` → stg workspace  
-- `main` → prod workspace (manual approval)
+## 📁 Project Structure
 
-## Outputs
+```
+.
+├── terraform.tf              # Terraform Cloud & provider configuration
+├── main.tf                   # Main orchestration
+├── variables.tf              # Variable definitions
+├── outputs.tf                # Outputs for other repos
+├── environments/             # Environment configs
+│   ├── dev.tfvars
+│   ├── stg.tfvars
+│   └── prod.tfvars
+└── modules/
+    ├── networking/           # VNet, subnets, private DNS
+    ├── storage/              # Data Lake Gen2
+    ├── security/
+    │   ├── identity/         # Managed identities
+    │   └── key-vault/        # Key Vault
+    ├── compute/
+    │   ├── synapse/          # Synapse & Spark
+    │   └── data-factory/     # ADF
+    ├── ai-services/
+    │   ├── search/           # AI Search
+    │   └── openai/           # OpenAI
+    └── monitoring/           # Logs & Alerts
+```
 
-Key outputs available for other repos:
-- `synapse_workspace_name`
-- `data_factory_name`
-- `storage_account_name`
-- `search_service_name`
-- `key_vault_name`
+## 🔐 Security Features
 
-## Repository Integration
+- ✅ Private endpoints for all services
+- ✅ VNet isolation
+- ✅ Managed identities
+- ✅ Key Vault for secrets
+- ✅ Network ACLs
+- ✅ Diagnostic logging
 
-Backend and Frontend repos fetch these outputs via Terraform Cloud API to configure deployments.
+## 📊 Data Lake Structure
+
+```
+├── raw/         # Landing zone
+├── bronze/      # Raw with minimal transforms
+├── silver/      # Cleaned & conformed
+├── gold/        # Business aggregates
+├── ai/          # AI/ML artifacts
+├── search/      # Search indexes
+└── synapse/     # Synapse files
+```
+
+## 📤 Key Outputs
+
+```
+storage_account_name
+synapse_workspace_name
+data_factory_name
+search_service_name
+openai_account_name
+key_vault_name
+```
+
+## 🚨 Monitoring
+
+- Log Analytics (30-day retention)
+- Application Insights
+- Alerts for failures & performance
+
+## 💰 Cost Optimization
+
+- Auto-pause Spark pools
+- Right-sized resources per environment
+- Managed identities (no rotation costs)
+
+## 📚 Resources
+
+- [Azure Synapse Docs](https://docs.microsoft.com/azure/synapse-analytics/)
+- [Terraform Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+- [Terraform Cloud Docs](https://www.terraform.io/cloud-docs)
